@@ -3,19 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package auctionsystem.ejb;
 
-import javax.ejb.Stateless;
+import javax.ejb.Remote;
 
 /**
  *
  * @author Curso
  */
-@Stateless
-public class AuctionManagerBean implements AuctionManagerBeanRemote {
+@Remote
+public interface AuctionManagerBeanRemote {
 
-    public String communicationTest(String message) {
-        return message;
-    }
-
+    String communicationTest(String message);
+    
 }
