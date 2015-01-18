@@ -6,6 +6,8 @@
 
 package auctionsystem.ejb;
 
+import auctionsystem.entity.Item;
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
@@ -16,5 +18,9 @@ import javax.ejb.Remote;
 public interface AuctionManagerBeanRemote {
 
     String communicationTest(String message);
+
+    Item addItem(String description, String image);
+
+    List<Item> getItems();
     
 }
