@@ -3,11 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package auctionsystem.ejb;
 
+import auctionsystem.entity.Auction;
 import auctionsystem.entity.Item;
+import auctionsystem.entity.User;
+import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Future;
 import javax.ejb.Remote;
 
 /**
@@ -15,16 +18,10 @@ import javax.ejb.Remote;
  * @author Curso
  */
 @Remote
-public interface AuctionManagerBeanRemote {
+public interface StartAuctionBeanRemote {
 
-    String communicationTest(String message);
+    Auction addAuction(double startAmount, Date closeTime, Item item, User seller);
 
-    Item addItem(String description, String image);
-
-    List<Item> getItems();
-
-    void remove();
-
-    public Future<String> checkout();
-
+    List<Auction> getAuction();
+    
 }

@@ -7,9 +7,19 @@
 package auctionappappclient;
 
 import auctionsystem.ejb.AuctionManagerBeanRemote;
+import auctionsystem.ejb.StartAuctionBeanRemote;
+import auctionsystem.entity.Auction;
 import auctionsystem.entity.Item;
+import auctionsystem.entity.User;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -17,6 +27,8 @@ import javax.swing.table.DefaultTableModel;
  * @author Curso
  */
 public class AuctionAppGUI extends javax.swing.JFrame {
+    @EJB
+    private static StartAuctionBeanRemote startAuctionBean;
     @EJB
     private static AuctionManagerBeanRemote auctionManagerBean;
 
@@ -48,6 +60,7 @@ public class AuctionAppGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         items_table = new javax.swing.JTable();
         jButton2 = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
@@ -57,12 +70,19 @@ public class AuctionAppGUI extends javax.swing.JFrame {
         auctions_closeTime = new com.toedter.calendar.JDateChooser();
         jButton3 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        auction_table = new javax.swing.JTable();
         jButton4 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
 
         jLabel3.setText("jLabel3");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jTabbedPane1StateChanged(evt);
+            }
+        });
 
         jLabel1.setText("Description:");
 
@@ -100,6 +120,13 @@ public class AuctionAppGUI extends javax.swing.JFrame {
             }
         });
 
+        jButton5.setText("clear");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -112,7 +139,10 @@ public class AuctionAppGUI extends javax.swing.JFrame {
                         .addComponent(jButton2))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jButton1)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jButton5)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton1))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(jLabel2)
@@ -137,7 +167,9 @@ public class AuctionAppGUI extends javax.swing.JFrame {
                     .addComponent(jLabel2)
                     .addComponent(items_image, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jButton1)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(jButton5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -160,8 +192,13 @@ public class AuctionAppGUI extends javax.swing.JFrame {
         });
 
         jButton3.setText("Add");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        auction_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -177,12 +214,19 @@ public class AuctionAppGUI extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jScrollPane2.setViewportView(jTable1);
+        jScrollPane2.setViewportView(auction_table);
 
         jButton4.setText("Refresh");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
+            }
+        });
+
+        jButton6.setText("checkout");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
             }
         });
 
@@ -195,7 +239,10 @@ public class AuctionAppGUI extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jButton3)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jButton6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton3))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(jLabel4)
@@ -229,7 +276,9 @@ public class AuctionAppGUI extends javax.swing.JFrame {
                     .addComponent(jLabel6)
                     .addComponent(auctions_closeTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jButton3)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton3)
+                    .addComponent(jButton6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -270,6 +319,63 @@ public class AuctionAppGUI extends javax.swing.JFrame {
         refreshItems();
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+        switch (jTabbedPane1.getSelectedIndex()){
+            case 0:
+                //pestaña de items
+                break;
+            case 1:
+                DefaultComboBoxModel model = (DefaultComboBoxModel)auctions_item.getModel();
+                List<Item> items = auctionManagerBean.getItems();
+                model.removeAllElements();
+                for (Item item : items) {
+                    model.addElement(item);
+                }
+                break;
+        }
+    }//GEN-LAST:event_jTabbedPane1StateChanged
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        startAuctionBean.addAuction(new Double(auctions_startAmount.getText()), auctions_closeTime.getDate(),(Item)auctions_item.getSelectedItem(), new User());
+        //startAuctionBean.addAuction2();
+        refreshAuctions();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        auctionManagerBean.remove();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        new Thread(new Runnable() {
+            Future<String> future = auctionManagerBean.checkout();
+            @Override
+            public void run() {
+                JOptionPane.showMessageDialog(rootPane, "Tu compra esta en proceso, te avisaremos cuando termine");
+                int i = 1;
+                while(!future.isDone()){
+                    i++;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(AuctionAppGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    if(i > 5){
+                        JOptionPane.showMessageDialog(rootPane, future.cancel(true));
+                    }
+                }
+                try {
+                    JOptionPane.showMessageDialog(rootPane, "Gracias por tu espera, tus productos llegaran pronto, guarda este id para aclaraciones "+future.get());
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AuctionAppGUI.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(AuctionAppGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+            }
+        }).start();
+        
+    }//GEN-LAST:event_jButton6ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -306,6 +412,7 @@ public class AuctionAppGUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable auction_table;
     private com.toedter.calendar.JDateChooser auctions_closeTime;
     private javax.swing.JComboBox auctions_item;
     private javax.swing.JTextField auctions_startAmount;
@@ -316,6 +423,8 @@ public class AuctionAppGUI extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -327,7 +436,6 @@ public class AuctionAppGUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 
     private void refreshItems() {
@@ -336,6 +444,15 @@ public class AuctionAppGUI extends javax.swing.JFrame {
         model.setRowCount(0);
         for (Item item : items) {
             model.addRow(new Object[]{item.getId(),item.getDescription(),item.getImage()});
+        }
+    }
+    
+    private void refreshAuctions(){
+        List<Auction> auctions = startAuctionBean.getAuction();
+        DefaultTableModel model = (DefaultTableModel)auction_table.getModel();
+        model.setRowCount(0);
+        for (Auction auction : auctions) {
+            model.addRow(new Object[]{auction.getId(),auction.getItem().getDescription(),auction.getStatus(),auction.getOpenTime(),auction.getCloseTime(),auction.getSeller() != null ? auction.getSeller() : "N/A"});
         }
     }
 }
