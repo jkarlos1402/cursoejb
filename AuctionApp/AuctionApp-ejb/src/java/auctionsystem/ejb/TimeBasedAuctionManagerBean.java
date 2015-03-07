@@ -3,24 +3,23 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package auctionsystem.ejb;
 
 import java.text.DateFormat;
 import java.util.Date;
-import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.ejb.LocalBean;
 
 /**
  *
- * @author Curso
+ * @author Humberto
  */
 @Stateless
 @LocalBean
 public class TimeBasedAuctionManagerBean {
 
-    public String communicationTest(String message){
+    public String communicationTest(String message) {
         DateFormat df = DateFormat.getDateTimeInstance();
-        return "Recived "+message+" at "+df.format(new Date());
+        return "Received " + message + " at: " + df.format(new Date());
     }
 }

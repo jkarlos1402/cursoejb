@@ -17,12 +17,13 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  *
- * @author Curso
+ * @author Humberto
  */
 @WebServlet(name = "ComunicationTestServlet", urlPatterns = {"/ComunicationTestServlet"})
 public class ComunicationTestServlet extends HttpServlet {
-//    @EJB
-//    private AuctionManagerBeanLocal auctionManagerBean;
+    
+    @EJB
+    private auctionsystem.ejb.AuctionManagerBeanRemote auctionManagerBean;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -44,7 +45,7 @@ public class ComunicationTestServlet extends HttpServlet {
             out.println("<title>Servlet ComunicationTestServlet</title>");
             out.println("</head>");
             out.println("<body>");
-//            out.println("<h1>"+auctionManagerBean.comunicationTest("Hello EJB World")+"</h1>");
+            out.println("<h1>" + auctionManagerBean.communicationTest("hello on startup") + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }

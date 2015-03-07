@@ -6,25 +6,22 @@
 package auctionsystem.ejb;
 
 import auctionsystem.entity.Item;
+import auctionsystem.entity.User;
 import java.util.List;
 import java.util.concurrent.Future;
 import javax.ejb.Remote;
 
 /**
  *
- * @author Curso
+ * @author Humberto
  */
 @Remote
 public interface AuctionManagerBeanRemote {
 
-    String communicationTest(String message);
-
-    Item addItem(String description, String image);
-
-    List<Item> getItems();
-
-    void remove();
-
+    public String communicationTest(String message);
+    public Item addItem(String description, String image, Integer sellerId);
+    public List<Item> getItems(Integer sellerId);
+    public void remove();
     public Future<String> checkout();
-
+    User login(String displayName, String password);
 }

@@ -5,15 +5,17 @@
  */
 package auctionsystem.ejb;
 
+import java.util.Date;
 import javax.ejb.Local;
 
 /**
  *
- * @author Curso
+ * @author Humberto
  */
 @Local
 public interface AuctionManagerBeanLocal {
 
-    String comunicationTest(String message);
+    
+
     
 }
