@@ -19,9 +19,16 @@ import javax.ejb.Remote;
 public interface AuctionManagerBeanRemote {
 
     public String communicationTest(String message);
+
     public Item addItem(String description, String image, Integer sellerId);
+
     public List<Item> getItems(Integer sellerId);
+
     public void remove();
+
     public Future<String> checkout();
+
     User login(String displayName, String password);
+
+    public void addBid(Integer auctionId, double amount, Integer bidderId);
 }
