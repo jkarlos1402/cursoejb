@@ -10,8 +10,8 @@ import auctionsystem.entity.Auction;
 import auctionsystem.entity.Bid;
 import auctionsystem.entity.Item;
 import auctionsystem.entity.User;
+import auctionsystem.interceptor.AuctionInterceptor;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -22,13 +22,17 @@ import javax.annotation.Resource;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
+import javax.ejb.EJBException;
 import javax.ejb.PostActivate;
 import javax.ejb.PrePassivate;
 import javax.ejb.Remove;
-import javax.ejb.Stateful;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.ejb.TimerService;
+import javax.interceptor.Interceptors;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -44,19 +48,21 @@ import javax.persistence.Query;
  * @author Humberto
  */
 @Stateless
+@Interceptors(AuctionInterceptor.class)
 public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManagerBeanRemote {
 
     @EJB
     private TimeBasedAuctionManagerBean timeBasedAuctionManagerBean;
     @PersistenceContext
     private EntityManager em;
-    
-     @Resource(mappedName = "jms/QueueConnectionFactory")
-    private ConnectionFactory connectionFactory;
-
+    @Resource
+    private TimerService timerService;
+    //JMS
     @Resource(mappedName = "PlaceBidMDB")
     private Queue bidsPlacedQueue;
-
+    @Resource(mappedName = "jms/QueueConnectionFactory")
+    private ConnectionFactory connectionFactory;
+   
     @PostConstruct
     public void initialize() {
         /*System.out.println("AuctionManagerBean.initialize() @PostConstruct");
@@ -133,7 +139,6 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         return new AsyncResult<>(orderId);
     }
 
-    @Override
     public User login(String displayName, String password) {
         Query query = em.createQuery("SELECT u FROM User u WHERE u.displayName = :displayName");
         query.setParameter("displayName", displayName);
@@ -146,7 +151,13 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
     }
 
     @Override
+    public void addBid(Integer auctionId, double amount, Integer bidderId) {
+        sendBidStatusUpdateMessage(auctionId, bidderId, amount);
+    }
+
+    @Override
     public void placeBid(Integer auctionId, Integer bidderId, Double amount) {
+        System.out.println("placeBid()");
         User bidder = em.find(User.class, bidderId);
         Auction auction = em.find(Auction.class, auctionId);
         System.out.println(auction);
@@ -155,39 +166,40 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         bid.setAuction(auction);
         bid.setBidTime(new Date());
         bid.setBidder(bidder);
-        if (amount > auction.getIncrement() && auction.getStatus().equals("open") && auction.getCloseTime().after(new Date())) {
+        if (amount > auction.getIncrement() && auction.getStatus().equals("OPEN") && auction.getCloseTime().after(new Date())) {
             auction.setIncrement(amount);
             bid.setApproval("Approved");
         } else {
-            bid.setApproval("Denied");            
+            bid.setApproval("Denied");
         }
         em.persist(bid);
-        System.out.println("placeBid");
     }
-    
-    private void sendBidMessage(Integer auctionId, Integer bidderId, Double amount){
+
+    private void sendBidStatusUpdateMessage(Integer auctionID, Integer bidderID, double amount) {
         Connection connection = null;
         try {
             connection = connectionFactory.createConnection();
-            Session session = connection.createSession(true,Session.SESSION_TRANSACTED);
+            Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
             MessageProducer producer = session.createProducer(bidsPlacedQueue);
-            PlaceBidMessage placeBidMessageDto = new PlaceBidMessage(auctionId, bidderId, amount);
-            ObjectMessage message = session.createObjectMessage(placeBidMessageDto);
-            producer.send(message);
-            
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }finally{
-            try {
-                connection.close();
-            } catch (JMSException ex) {
-                Logger.getLogger(AuctionManagerBean.class.getName()).log(Level.SEVERE, null, ex);
+            PlaceBidMessage PlaceBidMessageDTO = new PlaceBidMessage(auctionID, bidderID, amount);
+
+            ObjectMessage message = session.createObjectMessage(PlaceBidMessageDTO);
+            //int property = auctionID.intValue();
+            //Si ponemos false, y declaramos un pid nadie tomará ese mensaje, se queda en la cola hasta que alguien lo consuma
+            message.setStringProperty("Approved", "true");
+            producer.send(message, DeliveryMode.NON_PERSISTENT, 1, 30000);
+        } catch (JMSException je) {
+            throw new EJBException(je);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (JMSException je) {
+                    throw new EJBException(je);
+                } finally {
+                    connection = null;
+                }
             }
         }
-    }
-
-    @Override
-    public void addBid(Integer auctionId, double amount, Integer bidderId) {
-        sendBidMessage(auctionId, bidderId, amount);
     }
 }

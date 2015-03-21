@@ -8,7 +8,7 @@
             <ejb-name>AuctionManagerBean</ejb-name>
             <business-remote>auctionsystem.ejb.AuctionManagerBeanRemote</business-remote> 
             <ejb-class>auctionsystem.ejb.AuctionManagerBean</ejb-class> 
-            <session-type>Stateful</session-type>           
+            <session-type>Stateless</session-type>           
         </session>
         Deployment information for additional beans goes here
     </enterprise-beans>-->

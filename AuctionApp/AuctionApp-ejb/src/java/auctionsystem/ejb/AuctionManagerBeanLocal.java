@@ -14,7 +14,6 @@ import javax.ejb.Local;
  */
 @Local
 public interface AuctionManagerBeanLocal {
-    
+
     void placeBid(Integer auctionId, Integer bidderId, Double amount);
-    
 }

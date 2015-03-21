@@ -11,6 +11,9 @@
             <test-roots>
                 <root id="test.src.dir"/>
             </test-roots>
+            <included-library dirs="200">libs.JCalendar.classpath</included-library>
+            <included-library dirs="100">reference.AuctionApp-ejb.dist</included-library>
+            <included-library dirs="200">reference.AuctionAppLibrary.jar</included-library>
             <included-library dirs="200">file.reference.jcalendar-1.3.3.jar</included-library>
         </data>
         <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">

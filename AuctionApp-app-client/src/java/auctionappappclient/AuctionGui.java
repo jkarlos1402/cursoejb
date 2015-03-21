@@ -5,22 +5,29 @@
  */
 package auctionappappclient;
 
+import auctionsystem.dto.PlaceBidMessage;
 import auctionsystem.ejb.AuctionManagerBeanRemote;
 import auctionsystem.ejb.StartAuctionBeanRemote;
 import auctionsystem.entity.Auction;
 import auctionsystem.entity.Bid;
 import auctionsystem.entity.Item;
 import auctionsystem.entity.User;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
-import javax.swing.ComboBoxModel;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -33,6 +40,9 @@ public class AuctionGui extends javax.swing.JFrame {
     private static StartAuctionBeanRemote startAutionBean;
     private static AuctionManagerBeanRemote auctionManagerBean;
     private User user;
+
+    private static QueueConnectionFactory connectionFactory;
+    private static Queue bidsPlacedQueue;
 
     /**
      * Creates new form AuctionGui
@@ -47,9 +57,11 @@ public class AuctionGui extends javax.swing.JFrame {
         this();
     }
 
-    public AuctionGui(StartAuctionBeanRemote startAutionBean, AuctionManagerBeanRemote auctionManagerBean, User user) {
+    public AuctionGui(StartAuctionBeanRemote startAutionBean, AuctionManagerBeanRemote auctionManagerBean, User user, QueueConnectionFactory connectionFactory, Queue bidsPlacedQueue) {
         this.startAutionBean = startAutionBean;
         this.auctionManagerBean = auctionManagerBean;
+        this.connectionFactory = connectionFactory;
+        this.bidsPlacedQueue = bidsPlacedQueue;
         initComponents();
         this.user = user;
         refreshItems();
@@ -222,6 +234,8 @@ public class AuctionGui extends javax.swing.JFrame {
 
         jLabel5.setText("Start Amount");
 
+        auctions_closeTime.setDateFormatString("MMM d, yyyy HH:mm:ss");
+
         auctions_jTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -280,7 +294,7 @@ public class AuctionGui extends javax.swing.JFrame {
                                     .addComponent(auctions_startAmount)
                                     .addComponent(auctions_item, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(auctions_closeTime, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE))))
-                        .addGap(0, 304, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -303,7 +317,7 @@ public class AuctionGui extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton3)
                     .addComponent(jButton4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 398, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -507,13 +521,28 @@ public void refreshItems() {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        //startAutionBean.addBid(((Auction) bid_auction.getSelectedItem()).getId(), Double.parseDouble(bid_amount.getText()), user.getId());
-        for(int i = 0; i < 1000; i++){
-            auctionManagerBean.addBid(((Auction) bid_auction.getSelectedItem()).getId(), (Double.parseDouble(bid_amount.getText())+i), user.getId());
-        }
+        auctionManagerBean.addBid(((Auction) bid_auction.getSelectedItem()).getId(), Double.parseDouble(bid_amount.getText()), user.getId());
+        //for (int i = 0; i < 1000; i++) {
+        //sendBidStatusUpdateMessage(((Auction) bid_auction.getSelectedItem()).getId(), user.getId(),Double.parseDouble(bid_amount.getText()));
+        //}
         refreshBids();
     }//GEN-LAST:event_jButton6ActionPerformed
+    private void sendBidStatusUpdateMessage(Integer auctionID, Integer bidderID, double amount) {
+        try {
+            QueueConnection queueCon = connectionFactory.createQueueConnection();
+            QueueSession queueSession = queueCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+            QueueSender queueSender = queueSession.createSender(null);
 
+            //for (int i = 0; i < 1000; i++) {
+            PlaceBidMessage PlaceBidMessageDTO = new PlaceBidMessage(auctionID, bidderID, amount);
+            ObjectMessage message = queueSession.createObjectMessage(PlaceBidMessageDTO);
+            queueSender.send(bidsPlacedQueue, message);
+            //}
+            queueCon.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         refreshBids();
     }//GEN-LAST:event_jButton7ActionPerformed

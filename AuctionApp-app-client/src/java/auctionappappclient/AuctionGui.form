@@ -263,7 +263,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="0" pref="304" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="jScrollPane1" pref="585" max="32767" attributes="0"/>
                       </Group>
@@ -294,7 +294,7 @@
                           <Component id="jButton3" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jButton4" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="16" max="32767" attributes="0"/>
                       <Component id="jScrollPane1" min="-2" pref="398" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -327,6 +327,9 @@
             <Component class="javax.swing.JTextField" name="auctions_startAmount">
             </Component>
             <Component class="com.toedter.calendar.JDateChooser" name="auctions_closeTime">
+              <Properties>
+                <Property name="dateFormatString" type="java.lang.String" value="MMM d, yyyy HH:mm:ss"/>
+              </Properties>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane1">
               <AuxValues>

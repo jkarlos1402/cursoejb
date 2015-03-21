@@ -172,7 +172,7 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return "auctionsystem.entity.User[ id=" + id + " ]";
+        return displayName;
     }
     
 }

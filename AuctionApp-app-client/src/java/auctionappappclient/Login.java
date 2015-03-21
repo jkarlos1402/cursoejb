@@ -8,7 +8,10 @@ package auctionappappclient;
 import auctionsystem.ejb.AuctionManagerBeanRemote;
 import auctionsystem.ejb.StartAuctionBeanRemote;
 import auctionsystem.entity.User;
+import javax.annotation.Resource;
 import javax.ejb.EJB;
+import javax.jms.Queue;
+import javax.jms.QueueConnectionFactory;
 import javax.swing.JOptionPane;
 
 /**
@@ -22,6 +25,11 @@ public class Login extends javax.swing.JFrame {
     @EJB
     private static AuctionManagerBeanRemote auctionManagerBean;
     User user;
+
+    @Resource(mappedName = "jms/QueueConnectionFactory")
+    private static QueueConnectionFactory connectionFactory;
+    @Resource(mappedName = "PlaceBidMDB")
+    private static Queue bidsPlacedQueue;
 
     /**
      * Creates new form Login
@@ -100,14 +108,14 @@ public class Login extends javax.swing.JFrame {
             public void run() {
                 user = auctionManagerBean.login(user_JTextField.getText(), password_JTextField.getText());
                 if (user != null) {
-                    new AuctionGui(startAutionBean, auctionManagerBean, user).setVisible(true);
+                    new AuctionGui(startAutionBean, auctionManagerBean, user, connectionFactory, bidsPlacedQueue).setVisible(true);
                     setVisible(false);
                 } else {
                     JOptionPane.showMessageDialog(rootPane, "Usuario y/o contraseña incorrecta.");
                 }
             }
         });
-        
+
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**

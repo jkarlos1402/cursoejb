@@ -1,30 +1,55 @@
+/*
+ *
+ * Copyright 2003 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * This software is the proprietary information of Sun Microsystems, Inc.
+ * Use is subject to license terms.
+ *
+ */
 
 package auctionsystem.dto;
 
-import java.io.Serializable;
-
-public class PlaceBidMessage implements Serializable{
+import java.io.*;
+/** This is the class of the bid data
+ * transfer object which is sent from
+ * the client to the auction system.
+ *
+ * <br><br>
+ *
+ * It carries the following information:
+ * <ul>
+ *  <li> the ID of the auction
+ *  <li> the ID of the bidder
+ *  <li> the bid amount
+ * </ul>
+ *
+ * @author Matthias Weidmann
+ */
+public class PlaceBidMessage implements Serializable {
+    private Integer auctionID;
+    private Integer bidderID;
+    private double amount;
     
-    private Integer auctionId;
-    private Integer bidderId;
-    private Double amount;
-
-    public PlaceBidMessage(Integer auctionId, Integer bidderId, Double amount) {
-        this.auctionId = auctionId;
-        this.bidderId = bidderId;
+    public PlaceBidMessage(Integer auctionID, Integer bidderID, double amount) {
+        this.auctionID = auctionID;
+        this.bidderID = bidderID;
         this.amount = amount;
     }
-
-    public Double getAmount() {
+    
+    public Integer getAuctionID() {
+        return auctionID;
+    }
+    
+    public Integer getBidderID() {
+        return bidderID;
+    }
+    
+    public double getAmount() {
         return amount;
     }
-
-    public Integer getBidderId() {
-        return bidderId;
+    
+    public String toString() {
+        String s = auctionID + " " + bidderID + " " + amount;
+        return s;
     }
-        
-    public Integer getAuctionId() {
-        return auctionId;
-    }
-        
 }

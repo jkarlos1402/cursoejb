@@ -124,7 +124,7 @@ public class Item implements Serializable {
 
     @Override
     public String toString() {
-        return "auctionsystem.entity.Item[ id=" + id + " ]";
+        return description;
     }
     
 }

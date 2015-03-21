@@ -162,7 +162,6 @@ public class Auction implements Serializable {
 
     @Override
     public String toString() {
-        return "auctionsystem.entity.Auction[ id=" + id + " ]";
-    }
-    
+        return item.getDescription()+" CloseTime: "+closeTime;
+    }    
 }
