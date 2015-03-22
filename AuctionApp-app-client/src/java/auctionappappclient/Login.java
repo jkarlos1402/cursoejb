@@ -7,6 +7,7 @@ package auctionappappclient;
 
 import auctionsystem.ejb.AuctionManagerBeanRemote;
 import auctionsystem.ejb.StartAuctionBeanRemote;
+import auctionsystem.ejb.UserAuctionBeanRemote;
 import auctionsystem.entity.User;
 import javax.annotation.Resource;
 import javax.ejb.EJB;
@@ -19,6 +20,8 @@ import javax.swing.JOptionPane;
  * @author Humberto
  */
 public class Login extends javax.swing.JFrame {
+    @EJB
+    private static UserAuctionBeanRemote userAuctionBean;
 
     @EJB
     private static StartAuctionBeanRemote startAutionBean;
@@ -104,17 +107,18 @@ public class Login extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                user = auctionManagerBean.login(user_JTextField.getText(), password_JTextField.getText());
-                if (user != null) {
-                    new AuctionGui(startAutionBean, auctionManagerBean, user, connectionFactory, bidsPlacedQueue).setVisible(true);
-                    setVisible(false);
-                } else {
-                    JOptionPane.showMessageDialog(rootPane, "Usuario y/o contraseña incorrecta.");
-                }
-            }
-        });
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                user = auctionManagerBean.login(user_JTextField.getText(), password_JTextField.getText());
+//                if (user != null) {
+////                    userAuctionBean.addUser();
+//                    new AuctionGui(startAutionBean, auctionManagerBean, user, connectionFactory, bidsPlacedQueue).setVisible(true);
+//                    setVisible(false);
+//                } else {
+//                    JOptionPane.showMessageDialog(rootPane, "Usuario y/o contraseña incorrecta.");
+//                }
+//            }
+//        });
 
     }//GEN-LAST:event_jButton1ActionPerformed
 

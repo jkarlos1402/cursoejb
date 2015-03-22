@@ -5,6 +5,7 @@
  */
 package auctionsystem.ejb;
 
+import exception.PlaceBidException;
 import java.util.Date;
 import javax.ejb.Local;
 
@@ -15,5 +16,5 @@ import javax.ejb.Local;
 @Local
 public interface AuctionManagerBeanLocal {
 
-    void placeBid(Integer auctionId, Integer bidderId, Double amount);
+    void placeBid(Integer auctionId, Integer bidderId, Double amount) throws PlaceBidException;
 }

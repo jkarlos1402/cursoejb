@@ -6,8 +6,13 @@
 package auctionsystem.ejb;
 
 import auctionsystem.dto.PlaceBidMessage;
+import exception.PlaceBidException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Resource;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJB;
+import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
@@ -22,19 +27,25 @@ import javax.jms.ObjectMessage;
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
     @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "PlaceBidMDB"),
-    @ActivationConfigProperty(propertyName="messageSelector",propertyValue="Approved = 'true'" )
+    @ActivationConfigProperty(propertyName = "messageSelector", propertyValue = "Approved = 'true'")
 })
 public class PlaceBidMDBean implements MessageListener {
+
     @EJB
     private AuctionManagerBeanLocal auctionManagerBean;
-    
+
+    @Resource
+    private EJBContext context;
+
     //DEfinir un messageSelector para que si no se cumple, este bean no se ejecute, no tome el mensaje,
     //si es igual a true se escucha el mensaje , si no  no se escucha
+
     public PlaceBidMDBean() {
     }
 
     @Override
     public void onMessage(Message message) {
+
         ObjectMessage objectMessage = null;
         PlaceBidMessage placeBidMessage = null;
         Integer auctionId = null;
@@ -54,7 +65,12 @@ public class PlaceBidMDBean implements MessageListener {
         auctionId = placeBidMessage.getAuctionID();
         bidderId = placeBidMessage.getBidderID();
         amount = placeBidMessage.getAmount();
-        auctionManagerBean.placeBid(auctionId, bidderId, amount);
-        System.out.println("onMessage()");        
+        try {
+            auctionManagerBean.placeBid(auctionId, bidderId, amount);
+        } catch (PlaceBidException ex) {
+            System.out.println("Placed: PlaceBidException "+ex.getMessage());
+            context.setRollbackOnly();
+        }
+        System.out.println("onMessage()");
     }
 }

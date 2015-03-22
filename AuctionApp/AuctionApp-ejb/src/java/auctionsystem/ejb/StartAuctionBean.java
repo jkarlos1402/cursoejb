@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.ConcurrencyManagement;
 import static javax.ejb.ConcurrencyManagementType.CONTAINER;
 import javax.ejb.Lock;
@@ -54,11 +55,11 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
 
     @PersistenceContext
     private EntityManager em;
-    
+
     //Una manera de inyectar timerService
     @Resource
     private TimerService timerService;
-    
+
     //Otra forma de inyectar un sessionContext, para después hacer una tarea programada
     @Resource
     private SessionContext sessionContext;
@@ -82,7 +83,8 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
         em.flush();
         em.find(Auction.class, 1500);
         System.out.println("Auction id: " + auction.getId());
-        createAuctionTimer(auction.getCloseTime(), auction.getOpenTime(), auction.getId());//exception here
+        //int div = 100/0;
+        createAuctionTimer(auction.getOpenTime(), auction.getCloseTime(), auction.getId());
         return auction;
     }
 
@@ -97,6 +99,7 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
         }
     }
 
+    @RolesAllowed("BIDDER")
     @Lock(WRITE)
     public void addBid(Integer auctionId, double amount, Integer bidderId) {
         User bidder = em.find(User.class, bidderId);
@@ -126,12 +129,12 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
             return null;
         }
     }
-    
+
     @Timeout
     public void timeout(Timer timer) {
     //timer tiene la información de lo que yo programé ahí
-    //Lo que vamos a hacer es crear un timer para cerrar esa subasta, irá a la BD y pondrá el CLOSE 
-        String inforString = (String)timer.getInfo(); //Puede ser cualquier objecto serializable y castear del otro lado
+        //Lo que vamos a hacer es crear un timer para cerrar esa subasta, irá a la BD y pondrá el CLOSE 
+        String inforString = (String) timer.getInfo(); //Puede ser cualquier objecto serializable y castear del otro lado
         System.out.println("StartAuctionBean: timeout ocurred " + inforString);
         String auctionId = inforString.substring(18);
         System.out.println("Close Auction: " + auctionId);
@@ -141,25 +144,25 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
             Logger.getLogger(StartAuctionBean.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void createAuctionTimer(Date openTime, Date closeTime, Integer auctionId) {
         long duration = closeTime.getTime() - openTime.getTime();
-        
+
         System.out.println("CLOSE TIME: " + closeTime);
         System.out.println("OPEN TIME: " + openTime);
         System.out.println("StartAuctionBean.createAuctionTimer " + duration + " AuctionID: " + auctionId);
         timerService.createTimer(1000, "Auction timeout: " + auctionId);
         //TimeService t = sessionContext.getTimerService(); Es otra forma de crear el TimeService        
     }
-    
+
     public void closeAuction(Integer auctionId) throws CloseException {
         //Sentencias necesarias para ir a la BD y colocarle el CLOSE
         Auction auction = null;
         String status;
-        
+
         auction = em.find(Auction.class, auctionId);
         System.out.println("Auction find: " + auction.getId());
-        
+
         if (auction == null) {
             throw new CloseException("Auction # " + auctionId + " is not Open.");
         }
@@ -173,9 +176,8 @@ public class StartAuctionBean implements StartAuctionBeanRemote/*, TimedObject*/
     }
 
     /*@Override
-    public void ejbTimeout(Timer timer) {        
-    }*/
-    
+     public void ejbTimeout(Timer timer) {        
+     }*/
     @PreDestroy
     public void shutDownTimer() {
         Collection<Timer> timers = timerService.getTimers();

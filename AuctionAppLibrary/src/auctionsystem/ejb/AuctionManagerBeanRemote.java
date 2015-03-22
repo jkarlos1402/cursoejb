@@ -23,6 +23,6 @@ public interface AuctionManagerBeanRemote {
     public List<Item> getItems(Integer sellerId);
     public void remove();
     public Future<String> checkout();
-    User login(String displayName, String password);    
+    User login();    
     void addBid(Integer auctionId, double amount, Integer bidderId);
 }

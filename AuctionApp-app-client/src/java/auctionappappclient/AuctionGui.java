@@ -8,6 +8,7 @@ package auctionappappclient;
 import auctionsystem.dto.PlaceBidMessage;
 import auctionsystem.ejb.AuctionManagerBeanRemote;
 import auctionsystem.ejb.StartAuctionBeanRemote;
+import auctionsystem.ejb.UserAuctionBeanRemote;
 import auctionsystem.entity.Auction;
 import auctionsystem.entity.Bid;
 import auctionsystem.entity.Item;
@@ -19,6 +20,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
@@ -37,17 +40,25 @@ import javax.swing.table.DefaultTableModel;
  */
 public class AuctionGui extends javax.swing.JFrame {
 
-    private static StartAuctionBeanRemote startAutionBean;
-    private static AuctionManagerBeanRemote auctionManagerBean;
-    private User user;
+    @EJB
+    private static UserAuctionBeanRemote userAuctionBean;
 
+    @EJB
+    private static StartAuctionBeanRemote startAutionBean;
+    @EJB
+    private static AuctionManagerBeanRemote auctionManagerBean;
+    User user;
+
+    @Resource(mappedName = "jms/QueueConnectionFactory")
     private static QueueConnectionFactory connectionFactory;
+    @Resource(mappedName = "PlaceBidMDB")
     private static Queue bidsPlacedQueue;
 
     /**
      * Creates new form AuctionGui
      */
     public AuctionGui() {
+        user = auctionManagerBean.login();
         initComponents();
         refreshItems();
         refreshAuctions();
@@ -57,17 +68,17 @@ public class AuctionGui extends javax.swing.JFrame {
         this();
     }
 
-    public AuctionGui(StartAuctionBeanRemote startAutionBean, AuctionManagerBeanRemote auctionManagerBean, User user, QueueConnectionFactory connectionFactory, Queue bidsPlacedQueue) {
-        this.startAutionBean = startAutionBean;
-        this.auctionManagerBean = auctionManagerBean;
-        this.connectionFactory = connectionFactory;
-        this.bidsPlacedQueue = bidsPlacedQueue;
-        initComponents();
-        this.user = user;
-        refreshItems();
-        refreshAuctions();
-        System.out.println(user);
-    }
+//    public AuctionGui(StartAuctionBeanRemote startAutionBean, AuctionManagerBeanRemote auctionManagerBean, User user, QueueConnectionFactory connectionFactory, Queue bidsPlacedQueue) {
+//        this.startAutionBean = startAutionBean;
+//        this.auctionManagerBean = auctionManagerBean;
+//        this.connectionFactory = connectionFactory;
+//        this.bidsPlacedQueue = bidsPlacedQueue;
+//        initComponents();
+//        this.user = user;
+//        refreshItems();
+//        refreshAuctions();
+//        System.out.println(user);
+//    }
 
     /**
      * This method is called from within the constructor to initialize the form.

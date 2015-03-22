@@ -11,6 +11,7 @@ import auctionsystem.entity.Bid;
 import auctionsystem.entity.Item;
 import auctionsystem.entity.User;
 import auctionsystem.interceptor.AuctionInterceptor;
+import exception.PlaceBidException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -19,9 +20,11 @@ import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
+import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.ejb.PostActivate;
 import javax.ejb.PrePassivate;
@@ -29,6 +32,8 @@ import javax.ejb.Remove;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.interceptor.Interceptors;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -42,11 +47,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
 /**
  *
  * @author Humberto
  */
+@TransactionManagement(TransactionManagementType.BEAN)
 @Stateless
 @Interceptors(AuctionInterceptor.class)
 public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManagerBeanRemote {
@@ -62,7 +70,13 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
     private Queue bidsPlacedQueue;
     @Resource(mappedName = "jms/QueueConnectionFactory")
     private ConnectionFactory connectionFactory;
-   
+
+    @Resource
+    private UserTransaction ut;
+    
+    @Resource
+    private EJBContext context;
+    
     @PostConstruct
     public void initialize() {
         /*System.out.println("AuctionManagerBean.initialize() @PostConstruct");
@@ -89,7 +103,7 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         return timeBasedAuctionManagerBean.communicationTest(message);
     }
 
-    @Override
+    @RolesAllowed("SELLER")
     public Item addItem(String description, String image, Integer sellerId) {
         User user = em.find(User.class, sellerId);
         Item item = new Item();
@@ -97,8 +111,19 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         item.setImage(image);
         item.setSeller(user);
         System.out.println("addItem(" + description + ", " + image + ")");
-        em.persist(item);
-        em.flush();
+        try {
+            ut.begin();
+            em.persist(item);
+            em.flush();
+            ut.commit();
+        } catch (Exception e) {
+            try {
+                ut.rollback();
+            } catch (IllegalStateException | SecurityException | SystemException ex) {
+                throw new EJBException("Rollbalçck failed "+ ex.getMessage());
+            }
+        }
+
         return item;
     }
 
@@ -139,9 +164,11 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         return new AsyncResult<>(orderId);
     }
 
-    public User login(String displayName, String password) {
+    public User login() {
+        System.out.println("is Caller In Role SELLER"+context.isCallerInRole("SELLER"));
+        System.out.println("is Caller In Role BIDDER"+context.isCallerInRole("BIDDER"));
         Query query = em.createQuery("SELECT u FROM User u WHERE u.displayName = :displayName");
-        query.setParameter("displayName", displayName);
+        query.setParameter("displayName", context.getCallerPrincipal().getName());
         try {
             User user = (User) query.getSingleResult();
             return user;
@@ -150,13 +177,13 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         }
     }
 
-    @Override
+    @RolesAllowed("BIDDER")
     public void addBid(Integer auctionId, double amount, Integer bidderId) {
         sendBidStatusUpdateMessage(auctionId, bidderId, amount);
     }
 
     @Override
-    public void placeBid(Integer auctionId, Integer bidderId, Double amount) {
+    public void placeBid(Integer auctionId, Integer bidderId, Double amount) throws PlaceBidException {
         System.out.println("placeBid()");
         User bidder = em.find(User.class, bidderId);
         Auction auction = em.find(Auction.class, auctionId);
@@ -169,10 +196,11 @@ public class AuctionManagerBean implements AuctionManagerBeanLocal, AuctionManag
         if (amount > auction.getIncrement() && auction.getStatus().equals("OPEN") && auction.getCloseTime().after(new Date())) {
             auction.setIncrement(amount);
             bid.setApproval("Approved");
+            em.persist(bid);
         } else {
-            bid.setApproval("Denied");
+            throw new PlaceBidException("Bid denied");
         }
-        em.persist(bid);
+
     }
 
     private void sendBidStatusUpdateMessage(Integer auctionID, Integer bidderID, double amount) {
